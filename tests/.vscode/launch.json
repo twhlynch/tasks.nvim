@@ -13,6 +13,42 @@
 			"env": {
 				"ENV_VAR": "value"
 			}
+		},
+		{
+			// defaultBuildTask
+			"name": "default build task",
+			"type": "node",
+			"request": "launch",
+			"program": "echo hi",
+			"preLaunchTask": "${defaultBuildTask}"
+		},
+		{
+			// extension host type
+			"name": "extension host",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": ["--extensionDevelopmentPath=."]
+		},
+		{
+			// python debug
+			"name": "python debug",
+			"type": "python",
+			"request": "launch",
+			"program": "${workspaceFolder}/main.py",
+			"args": ["--verbose"]
+		},
+		{
+			// runtimeExecutable
+			"name": "runtime exec",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "/usr/local/bin/node"
+		},
+		{
+			// no program or runtimeExecutable
+			"name": "missing program",
+			"type": "node",
+			"request": "launch"
 		}
 	]
 }

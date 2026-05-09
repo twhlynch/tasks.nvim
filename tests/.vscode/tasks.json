@@ -40,6 +40,44 @@
 			"type": "shell",
 			"command": "echo",
 			"args": ["prelaunch"]
+		},
+		{
+			// default build task for ${defaultBuildTask}
+			"label": "default build",
+			"type": "shell",
+			"command": "echo",
+			"args": ["building"],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			// npm task
+			"label": "npm task",
+			"type": "npm",
+			"script": "simple"
+		},
+		{
+			// process task
+			"label": "process task",
+			"type": "process",
+			"command": "echo",
+			"args": ["process"]
+		},
+		{
+			// task with cwd
+			"label": "custom cwd",
+			"type": "shell",
+			"command": "pwd",
+			"options": {
+				"cwd": "/tmp"
+			}
+		},
+		{
+			// no label
+			"type": "shell",
+			"command": "skipme"
 		}
 	],
 	"inputs": [
