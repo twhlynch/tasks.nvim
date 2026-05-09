@@ -1,5 +1,8 @@
 local utils = require("tasks.utils")
+local vsutils = require("tasks.vscode.utils")
 local consts = require("tasks.vscode.consts")
+local tasks = require("tasks.vscode.tasks_json")
+local terminal = require("tasks.terminal")
 
 local M = {}
 
@@ -21,28 +24,144 @@ function M.tasks(bufnr)
 		return {}
 	end
 
-	local tasks = {}
+	local all_tasks = {}
 
 	for _, task in ipairs(json.configurations) do
 		if task.name then
 			local lnum = utils.find_line(bufnr, "name", task.name)
 			if lnum then
-				tasks[#tasks + 1] = {
+				all_tasks[#all_tasks + 1] = {
 					lnum = lnum,
 					run = function()
-						M.run(task)
+						M.run(task, bufnr)
 					end,
 				}
 			end
 		end
 	end
 
-	return tasks
+	return all_tasks
 end
 
---- @param task vscode.LaunchConfig
-function M.run(task)
-	vim.notify(vim.inspect(task))
+--- @param config vscode.LaunchConfig
+--- @param bufnr integer
+function M.run(config, bufnr)
+	local tasks_json = M.load_tasks_json(bufnr)
+	local inputs_map = {}
+
+	local commands = {}
+
+	local env = vsutils.build_env(config.env or vim.fn.environ(), inputs_map)
+	local cwd = vsutils.resolve_vars(config.cwd, inputs_map, env) or vim.fn.getcwd()
+
+	-- queue preLaunchTask entry
+	if config.preLaunchTask then
+		local task_label = config.preLaunchTask
+
+		-- resolve the special ${defaultBuildTask} variable
+		if task_label == "${defaultBuildTask}" then
+			task_label = M.resolve_default_build_task(tasks_json)
+			if not task_label then
+				vim.notify(consts.strings.no_default_build_task, vim.log.levels.WARN)
+				return
+			end
+		end
+
+		local pre_task = tasks_json[task_label]
+		if pre_task then
+			local pre_cmd = tasks.build_cmd(pre_task, inputs_map, env)
+			if pre_cmd then
+				table.insert(commands, pre_cmd)
+			end
+		else
+			vim.notify(vim.fn.printf(consts.strings.task_not_found, config.preLaunchTask), vim.log.levels.WARN)
+		end
+	end
+
+	-- queue actual launch command
+	local launch_cmd = M.build_cmd(config, inputs_map, env)
+	if launch_cmd then
+		table.insert(commands, launch_cmd)
+	end
+
+	if #commands == 0 then
+		return
+	end
+
+	terminal.execute_commands(commands, env, cwd)
+end
+
+--- load tasks.json from the same folder as the launch config
+--- @param bufnr integer
+--- @return table<string, vscode.TaskConfig>
+function M.load_tasks_json(bufnr)
+	-- get matching tasks.json
+	local filepath = vim.api.nvim_buf_get_name(bufnr)
+	local dir = vim.fn.fnamemodify(filepath, ":h")
+	local tasks_path = dir .. "/tasks.json"
+
+	local ok_lines, lines = pcall(vim.fn.readfile, tasks_path)
+	if not ok_lines then
+		return {}
+	end
+
+	local content = table.concat(lines, "\n")
+	content = utils.strip_json_comments(content)
+	content = utils.normalise_json_commas(content)
+
+	local ok, json = pcall(vim.json.decode, content)
+	if not ok or type(json) ~= "table" or json.tasks == nil then
+		return {}
+	end
+
+	local tasks_map = {}
+	for _, task in ipairs(json.tasks) do
+		if task.label then
+			tasks_map[task.label] = task
+		end
+	end
+	return tasks_map
+end
+
+--- find the default build task from the project tasks cache
+--- @param project_tasks table<string, vscode.TaskConfig>
+--- @return string | nil
+function M.resolve_default_build_task(project_tasks)
+	for label, task in pairs(project_tasks) do
+		if
+			task.group -- fmt
+			and type(task.group) == "table"
+			and task.group.kind == "build"
+			and task.group.isDefault == true
+		then
+			return label
+		end
+	end
+	return nil
+end
+
+--- build command for a launch config
+--- @param config vscode.LaunchConfig
+--- @param inputs table<string, vscode.UserInput>
+--- @param env env
+--- @return command | nil
+function M.build_cmd(config, inputs, env)
+	local exec, args
+
+	if config.type == "extensionHost" then
+		exec = config.runtimeExecutable or "code"
+	else
+		exec = config.runtimeExecutable or config.program
+		if not exec then
+			vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
+			return nil
+		end
+	end
+
+	args = config.args
+
+	local cmd = vsutils.build_cmd(exec, args, inputs, env)
+	return cmd
 end
 
 return M
