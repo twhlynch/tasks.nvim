@@ -26,7 +26,8 @@ function M.tasks(bufnr)
 				tasks[#tasks + 1] = {
 					lnum = lnum,
 					run = function()
-						vim.notify(command)
+						local terminal = require("tasks.terminal")
+						terminal.execute_commands({ command }, vim.fn.environ(), vim.fn.getcwd())
 					end,
 				}
 			end
