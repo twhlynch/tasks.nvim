@@ -1,4 +1,6 @@
 local utils = require("tasks.utils")
+local terminal = require("tasks.terminal")
+local vsutils = require("tasks.vscode.utils")
 local consts = require("tasks.vscode.consts")
 
 local M = {}
@@ -43,7 +45,57 @@ end
 --- @param task vscode.TaskConfig
 --- @param inputs vscode.UserInput[]
 function M.run(task, inputs)
-	vim.notify(vim.inspect(task) .. tostring(#inputs))
+	local inputs_map = vsutils.extract_inputs(inputs)
+
+	local env = vsutils.build_env({}, inputs_map)
+	local cwd = vim.fn.getcwd()
+
+	if task.options then
+		if task.options.env then
+			env = vsutils.build_env(task.options.env, inputs_map)
+		end
+		if task.options.cwd then
+			cwd = vsutils.resolve_vars(task.options.cwd, inputs_map, env) or cwd
+		end
+	end
+
+	local cmd = M.build_cmd(task, inputs_map, env)
+	if cmd == nil then
+		return
+	end
+
+	terminal.execute_commands({ cmd }, env, cwd)
+end
+
+--- build command for a task config
+--- @param config vscode.TaskConfig
+--- @param inputs table<string, vscode.UserInput>
+--- @param env env
+--- @return command | nil
+function M.build_cmd(config, inputs, env)
+	local command, args = nil, nil
+
+	if config.type == "npm" then
+		if not config.script then
+			vim.notify(consts.strings.missing_script, vim.log.levels.ERROR)
+			return nil
+		end
+		command = "npm"
+		args = vim.list_extend({ "run", config.script }, config.args or {})
+	elseif config.type == "shell" or config.type == "process" then
+		if not config.command then
+			vim.notify(consts.strings.missing_command, vim.log.levels.ERROR)
+			return nil
+		end
+		command = config.command
+		args = config.args
+	end
+
+	if not command then
+		return nil
+	end
+	local cmd = vsutils.build_cmd(command, args, inputs, env)
+	return cmd
 end
 
 return M
