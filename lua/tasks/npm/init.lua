@@ -6,9 +6,13 @@ function M.get_pattern()
 end
 
 function M.get_tasks(bufnr)
-	local tasks = {}
+	local path = vim.api.nvim_buf_get_name(bufnr)
 
-	return tasks
+	if path:match("package%.json$") then
+		return require("tasks.npm.package_json").tasks(bufnr)
+	end
+
+	return {}
 end
 
 return M
