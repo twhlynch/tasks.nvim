@@ -4,6 +4,8 @@ return {
 	namespace_name = "tasks",
 
 	strings = {
+		term_title = " Task Runner ",
+		task_failed = "Task failed with code %s",
 		no_target = "No runnable target on this line",
 		keybind_desc = "Run Task",
 	},
