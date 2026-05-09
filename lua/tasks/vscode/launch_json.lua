@@ -150,15 +150,25 @@ function M.build_cmd(config, inputs, env)
 
 	if config.type == "extensionHost" then
 		exec = config.runtimeExecutable or "code"
+		args = config.args
+	elseif config.type == "python" or config.type == "debugpy" then
+		exec = config.runtimeExecutable or "python3"
+		args = vim.list_extend({ config.program }, config.args or {})
+	elseif config.type == "cppdbg" then
+		exec = config.program
+		if not exec then
+			vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
+			return nil
+		end
+		args = config.args
 	else
 		exec = config.runtimeExecutable or config.program
 		if not exec then
 			vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
 			return nil
 		end
+		args = config.args
 	end
-
-	args = config.args
 
 	local cmd = vsutils.build_cmd(exec, args, inputs, env)
 	return cmd

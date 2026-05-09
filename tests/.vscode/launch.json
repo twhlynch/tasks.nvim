@@ -38,6 +38,21 @@
 			"args": ["--verbose"]
 		},
 		{
+			// debugpy type
+			"name": "debugpy debug",
+			"type": "debugpy",
+			"request": "launch",
+			"program": "${workspaceFolder}/main.py",
+			"args": ["--debug"]
+		},
+		{
+			// cppdbg type
+			"name": "cppdbg launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/main"
+		},
+		{
 			// runtimeExecutable
 			"name": "runtime exec",
 			"type": "node",
