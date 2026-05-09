@@ -11,9 +11,29 @@ function M.tasks(bufnr)
 		return {}
 	end
 
-	vim.notify(vim.inspect(json))
+	local scripts = json.scripts
+	if scripts == nil or type(scripts) ~= "table" then
+		return {}
+	end
 
-	return {}
+	local tasks = {}
+
+	for key, command in pairs(scripts) do
+		if type(command) == "string" then
+			local lnum = utils.find_line(bufnr, key, command)
+
+			if lnum ~= nil then
+				tasks[#tasks + 1] = {
+					lnum = lnum,
+					run = function()
+						vim.notify(command)
+					end,
+				}
+			end
+		end
+	end
+
+	return tasks
 end
 
 return M
