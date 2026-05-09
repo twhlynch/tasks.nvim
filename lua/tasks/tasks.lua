@@ -60,10 +60,9 @@ function M.render(bufnr, tasks)
 	end
 end
 
---- @param bufnr integer
 --- @param tasks Tasks.Task[]
-function M.run(bufnr, tasks)
-	local line = vim.api.nvim_win_get_cursor(bufnr)[1]
+function M.run(tasks)
+	local line = vim.api.nvim_win_get_cursor(0)[1]
 
 	for _, task in ipairs(tasks) do
 		if task.lnum == line then
@@ -93,7 +92,7 @@ function M.attach(bufnr)
 
 		-- keymap
 		vim.keymap.set("n", require("tasks.options").get().keybind, function()
-			M.run(bufnr, all_tasks)
+			M.run(all_tasks)
 		end, { buf = bufnr, desc = consts.strings.keybind_desc })
 	end
 end
