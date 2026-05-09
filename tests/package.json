@@ -1,0 +1,13 @@
+{
+	"name": "name",
+	"version": "0.0.0",
+	"scripts": {
+		// are comments allowed in package.json?
+		"simple": "echo 'running'",
+		"escape": "echo \"running\"",
+		"double": "npm run simple",
+		"url": "echo https://example.com",
+		"duplicate": ":",
+		"duplicate": ":"
+	}
+}
