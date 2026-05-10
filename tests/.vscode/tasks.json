@@ -78,14 +78,97 @@
 			// no label
 			"type": "shell",
 			"command": "skipme"
+		},
+		{
+			// all variables
+			"label": "all variables",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"\nuserHome:                 ${userHome}",
+				"\nworkspaceFolder:          ${workspaceFolder}",
+				"\nworkspaceFolderBasename:  ${workspaceFolderBasename}",
+				"\nfile:                     ${file}",
+				"\nfileWorkspaceFolder:      ${fileWorkspaceFolder}",
+				"\nrelativeFile:             ${relativeFile}",
+				"\nrelativeFileDirname:      ${relativeFileDirname}",
+				"\nfileBasename:             ${fileBasename}",
+				"\nfileBasenameNoExtension:  ${fileBasenameNoExtension}",
+				"\nfileExtname:              ${fileExtname}",
+				"\nfileDirname:              ${fileDirname}",
+				"\nfileDirnameBasename:      ${fileDirnameBasename}",
+				"\ncwd:                      ${cwd}",
+				"\nlineNumber:               ${lineNumber}",
+				"\ncolumnNumber:             ${columnNumber}",
+				"\nselectedText:             ${selectedText}",
+				"\nexecPath:                 ${execPath}",
+				"\npathSeparator:            ${pathSeparator}",
+				"\n/:                        ${/}",
+				"\nworkspaceRoot:            ${workspaceRoot}",
+				"\nenv:HOME:                 ${env:HOME}",
+				"\nHOME:                     $HOME",
+			]
+		},
+		{
+			// prompt
+			"label": "input promptString",
+			"type": "shell",
+			"command": "echo",
+			"args": ["${input:inputId}"]
+		},
+		{
+			// pick
+			"label": "input pickString",
+			"type": "shell",
+			"command": "echo",
+			"args": ["${input:pickId}"]
+		},
+		{
+			// pick labels
+			"label": "input pickLabel",
+			"type": "shell",
+			"command": "echo",
+			"args": ["${input:pickLabelId}"]
+		},
+		{
+			// password
+			"label": "input password",
+			"type": "shell",
+			"command": "echo",
+			"args": ["${input:passwordId}"]
 		}
 	],
 	"inputs": [
 		{
-			"id": "inputId", // usable as ${input:inputId}
+			"id": "inputId",
 			"type": "promptString",
 			"description": "Enter a value",
 			"default": "default"
+		},
+		{
+			"id": "passwordId",
+			"type": "promptString",
+			"description": "Enter password",
+			"password": true,
+			"default": "hunter2"
+		},
+		{
+			"id": "pickId",
+			"type": "pickString",
+			"description": "Pick an option",
+			"options": ["alpha", "beta", "gamma"],
+			"default": "alpha"
+		},
+		{
+			"id": "pickLabelId",
+			"type": "pickString",
+			"description": "Pick a language",
+			"options": [
+				{ "label": "Lua", "value": "lua" },
+				{ "label": "Python", "value": "python" },
+				{ "label": "Rust", "value": "rust" }
+			],
+			"default": "lua"
 		}
 	]
 }
