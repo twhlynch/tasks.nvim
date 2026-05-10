@@ -1,5 +1,30 @@
 local M = {}
 
+local function get_selected_text()
+	local start_pos = vim.fn.getpos("'<")
+	local end_pos = vim.fn.getpos("'>")
+	local ls, cs = start_pos[2], start_pos[3]
+	local le, ce = end_pos[2], end_pos[3]
+
+	if ls == 0 or le == 0 then
+		return ""
+	end
+
+	local lines = vim.api.nvim_buf_get_lines(0, ls - 1, le, false)
+	if #lines == 0 then
+		return ""
+	end
+
+	lines[1] = lines[1]:sub(cs)
+	if #lines == 1 then
+		lines[1] = lines[1]:sub(1, ce - cs + 1)
+	else
+		lines[#lines] = lines[#lines]:sub(1, ce)
+	end
+
+	return table.concat(lines, "\n")
+end
+
 --- build a command string or array from a command and args
 --- @param command string
 --- @param args? string[]
@@ -33,21 +58,43 @@ function M.resolve_vars(str, inputs, env)
 		return nil
 	end
 
-	-- stylua: ignore
+	local cwd = vim.fn.getcwd()
+	local filepath = vim.fn.expand("%:p")
+	local ext = vim.fn.expand("%:e")
+	local relpath = vim.fn.expand("%:.")
+	local filedir = vim.fn.fnamemodify(filepath, ":h")
+
 	local replacements = {
-		["${workspaceFolder}"] =         vim.fn.getcwd(),
-		["${file}"] =                    vim.fn.expand("%:p"),
-		["${fileDirname}"] =             vim.fn.expand("%:p:h"),
-		["${fileBasename}"] =            vim.fn.expand("%:t"),
+		["${userHome}"] = vim.fn.expand("~"),
+		["${workspaceFolder}"] = cwd,
+		["${workspaceFolderBasename}"] = vim.fn.fnamemodify(cwd, ":t"),
+		["${file}"] = filepath,
+		["${fileWorkspaceFolder}"] = cwd,
+		["${relativeFile}"] = relpath,
+		["${relativeFileDirname}"] = vim.fn.fnamemodify(relpath, ":h"),
+		["${fileBasename}"] = vim.fn.expand("%:t"),
 		["${fileBasenameNoExtension}"] = vim.fn.expand("%:t:r"),
-		["${workspaceFolderBasename}"] = vim.fn.fnamemodify(vim.fn.getcwd(), ":t"),
+		["${fileExtname}"] = ext ~= "" and "." .. ext or "",
+		["${fileDirname}"] = filedir,
+		["${fileDirnameBasename}"] = vim.fn.fnamemodify(filedir, ":t"),
+		["${cwd}"] = cwd,
+		["${lineNumber}"] = tostring(vim.fn.line(".")),
+		["${columnNumber}"] = tostring(vim.fn.col(".")),
+		["${selectedText}"] = get_selected_text(),
+		["${execPath}"] = vim.v.progpath,
+		["${pathSeparator}"] = "/",
+		["${/}"] = "/",
+		["${workspaceRoot}"] = cwd,
 	}
 
 	for pattern, replacement in pairs(replacements) do
 		str = str:gsub(vim.pesc(pattern), replacement)
 	end
 
-	-- env variables
+	-- env variables: ${env:NAME} and $NAME syntax
+	str = str:gsub("%${env:([^}]+)}", function(env_var)
+		return env[env_var] or ""
+	end)
 	str = str:gsub("$([%w_]+)", function(env_var)
 		return env[env_var] or ""
 	end)
