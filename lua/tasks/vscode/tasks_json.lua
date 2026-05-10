@@ -9,17 +9,15 @@ local M = {}
 --- @return Tasks.Task[]
 function M.tasks(bufnr)
 	local json = utils.parse_json(bufnr)
-
-	if json == nil then
+	if not json then
 		return {}
 	end
 
 	if json.version ~= consts.tasks_version then
-		---@diagnostic disable-next-line: redundant-parameter
-		vim.notify(vim.fn.printf(consts.strings.bad_version, json.version, consts.tasks_version), vim.log.levels.WARN)
+		vim.notify(string.format(consts.strings.bad_version, json.version, consts.tasks_version), vim.log.levels.WARN)
 	end
 
-	if json.tasks == nil or type(json.tasks) ~= "table" then
+	if type(json.tasks) ~= "table" then
 		return {}
 	end
 
@@ -29,12 +27,12 @@ function M.tasks(bufnr)
 		if task.label then
 			local lnum = utils.find_line(bufnr, "label", task.label)
 			if lnum then
-				tasks[#tasks + 1] = {
+				table.insert(tasks, {
 					lnum = lnum,
 					run = function()
 						M.run(task, json.inputs)
 					end,
-				}
+				})
 			end
 		end
 	end
@@ -60,7 +58,7 @@ function M.run(task, inputs)
 	end
 
 	local cmd = M.build_cmd(task, inputs_map, env)
-	if cmd == nil then
+	if not cmd then
 		return
 	end
 
@@ -73,7 +71,7 @@ end
 --- @param env env
 --- @return command | nil
 function M.build_cmd(config, inputs, env)
-	local command, args = nil, nil
+	local command, args
 
 	if config.type == "npm" then
 		if not config.script then
@@ -91,11 +89,9 @@ function M.build_cmd(config, inputs, env)
 		args = config.args
 	end
 
-	if not command then
-		return nil
+	if command then
+		return vsutils.build_cmd(command, args, inputs, env)
 	end
-	local cmd = vsutils.build_cmd(command, args, inputs, env)
-	return cmd
 end
 
 return M

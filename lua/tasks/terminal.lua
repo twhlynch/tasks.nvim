@@ -18,10 +18,12 @@ function M.open_terminal()
 	end
 
 	term_state.buf = vim.api.nvim_create_buf(false, true)
-	local width = math.floor(vim.o.columns * 0.8)
-	local height = math.floor(vim.o.lines * 0.8)
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
+	local cols = vim.o.columns
+	local lines = vim.o.lines
+	local width = math.floor(cols * 0.8)
+	local height = math.floor(lines * 0.8)
+	local row = math.floor((lines - height) / 2)
+	local col = math.floor((cols - width) / 2)
 
 	if not (term_state.win and vim.api.nvim_win_is_valid(term_state.win)) then
 		term_state.win = vim.api.nvim_open_win(term_state.buf, true, {
@@ -61,10 +63,8 @@ function M.execute_commands(cmds, env, cwd)
 		local job_opts = {
 			env = env,
 			term = true,
+			cwd = cwd,
 		}
-		if cwd then
-			job_opts.cwd = cwd
-		end
 
 		if current_idx < #cmds then
 			job_opts.on_exit = function(_, exit_code)
@@ -72,7 +72,7 @@ function M.execute_commands(cmds, env, cwd)
 					current_idx = current_idx + 1
 					vim.defer_fn(run_next, 50)
 				else
-					vim.notify(vim.fn.printf(consts.strings.task_failed, exit_code), vim.log.levels.ERROR)
+					vim.notify(string.format(consts.strings.task_failed, exit_code), vim.log.levels.ERROR)
 				end
 			end
 		end

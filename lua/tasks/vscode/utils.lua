@@ -9,14 +9,14 @@ local M = {}
 function M.build_cmd(command, args, inputs, env)
 	local cmd = { M.resolve_vars(command, inputs, env) }
 
-	if args == nil or #args == 0 then
+	if vim.tbl_isempty(args or {}) then
 		-- just the command as a string
 		return cmd[1]
-	else
-		-- add each argument
-		for _, arg in ipairs(args) do
-			table.insert(cmd, M.resolve_vars(arg, inputs, env))
-		end
+	end
+
+	-- add each argument
+	for _, arg in ipairs(args or {}) do
+		table.insert(cmd, M.resolve_vars(arg, inputs, env))
 	end
 
 	-- list of command and args
@@ -33,7 +33,7 @@ function M.resolve_vars(str, inputs, env)
 		return nil
 	end
 
-	 -- stylua: ignore
+	-- stylua: ignore
 	local replacements = {
 		["${workspaceFolder}"] =         vim.fn.getcwd(),
 		["${file}"] =                    vim.fn.expand("%:p"),
@@ -88,10 +88,8 @@ end
 --- @return table<string, vscode.UserInput>
 function M.extract_inputs(inputs)
 	local map = {}
-	if inputs then
-		for _, input in ipairs(inputs) do
-			map[input.id] = input
-		end
+	for _, input in ipairs(inputs or {}) do
+		map[input.id] = input
 	end
 	return map
 end

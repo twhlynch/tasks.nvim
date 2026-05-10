@@ -21,32 +21,32 @@ function M.normalise_json_commas(content)
 	return (content:gsub(",%s*}", "}"):gsub(",%s*%]", "]"))
 end
 
---- parse a jsonc buffer to a json table
---- @param bufnr integer
+--- @param content string
 --- @return nil | table
-function M.parse_json(bufnr)
-	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-	local content = table.concat(lines, "\n")
+function M.parse_json_content(content)
 	content = M.strip_json_comments(content)
 	content = M.normalise_json_commas(content)
 
 	local ok, data = pcall(vim.json.decode, content)
-	if not ok then
-		return nil
-	end
-
-	if type(data) ~= "table" then
+	if not ok or type(data) ~= "table" then
 		return nil
 	end
 
 	return data
 end
 
+--- @param bufnr integer
+--- @return nil | table
+function M.parse_json(bufnr)
+	local content = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+	return M.parse_json_content(content)
+end
+
 --- find the line number of a specific key-value pair
 --- @param bufnr integer
 --- @param key string
 --- @param value string
---- @return number | nil
+--- @return integer | nil
 function M.find_line(bufnr, key, value)
 	local pattern = '"' --
 		.. vim.pesc(key:gsub('"', '\\"'))

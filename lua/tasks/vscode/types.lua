@@ -37,7 +37,7 @@
 
 --- @class vscode.TasksJson tasks.json file schema
 --- @field version? string schema version
---- @field tasks? vscode.TaskConfig[] list of task congifs
+--- @field tasks? vscode.TaskConfig[] list of task configs
 --- @field inputs? vscode.UserInput[] list of inputs
 
 --- @class vscode.LaunchJson launch.json file schema

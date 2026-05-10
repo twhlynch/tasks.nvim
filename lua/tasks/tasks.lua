@@ -19,7 +19,7 @@ function M.get_providers()
 	for _, name in ipairs(names) do
 		local ok, provider = pcall(require, "tasks." .. name)
 		if ok then
-			providers[#providers + 1] = provider
+			table.insert(providers, provider)
 		end
 	end
 
@@ -31,14 +31,8 @@ end
 function M.get_pattern()
 	local pattern = {}
 
-	local providers = M.get_providers()
-
-	for _, provider in ipairs(providers) do
-		local files = provider.get_pattern()
-
-		for _, file in ipairs(files) do
-			pattern[#pattern + 1] = file
-		end
+	for _, provider in ipairs(M.get_providers()) do
+		vim.list_extend(pattern, provider.get_pattern())
 	end
 
 	return pattern
@@ -64,34 +58,31 @@ end
 function M.run(tasks)
 	local line = vim.api.nvim_win_get_cursor(0)[1]
 
-	for _, task in ipairs(tasks) do
-		if task.lnum == line then
-			task.run()
-			return
-		end
-	end
+	local task = vim.iter(tasks):find(function(t)
+		return t.lnum == line
+	end)
 
-	vim.notify(consts.strings.no_target, vim.log.levels.WARN)
+	if task then
+		task.run()
+	else
+		vim.notify(consts.strings.no_target, vim.log.levels.WARN)
+	end
 end
 
---- @param bufnr number
+--- @param bufnr integer
 function M.attach(bufnr)
-	local providers = M.get_providers()
-
 	local all_tasks = {}
 
-	for _, provider in ipairs(providers) do
-		local tasks = provider.get_tasks(bufnr)
-		for _, task in ipairs(tasks) do
-			all_tasks[#all_tasks + 1] = task
-		end
+	for _, provider in ipairs(M.get_providers()) do
+		vim.list_extend(all_tasks, provider.get_tasks(bufnr))
 	end
 
-	if #all_tasks ~= 0 then
+	if not vim.tbl_isempty(all_tasks) then
 		M.render(bufnr, all_tasks)
 
 		-- keymap
-		vim.keymap.set("n", require("tasks.options").get().keybind, function()
+		local keybind = require("tasks.options").get().keybind
+		vim.keymap.set("n", keybind, function()
 			M.run(all_tasks)
 		end, { buf = bufnr, desc = consts.strings.keybind_desc })
 	end
@@ -110,8 +101,9 @@ function M.setup()
 	})
 
 	-- attach on read and write
+	local pattern = M.get_pattern()
 	vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-		pattern = M.get_pattern(),
+		pattern = pattern,
 		callback = function(args)
 			M.attach(args.buf)
 		end,

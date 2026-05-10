@@ -10,17 +10,16 @@ local M = {}
 --- @return Tasks.Task[]
 function M.tasks(bufnr)
 	local json = utils.parse_json(bufnr)
-
-	if json == nil then
+	if not json then
 		return {}
 	end
 
 	if json.version ~= consts.launch_version then
 		---@diagnostic disable-next-line: redundant-parameter
-		vim.notify(vim.fn.printf(consts.strings.bad_version, json.version, consts.launch_version), vim.log.levels.WARN)
+		vim.notify(string.format(consts.strings.bad_version, json.version, consts.launch_version), vim.log.levels.WARN)
 	end
 
-	if json.configurations == nil or type(json.configurations) ~= "table" then
+	if type(json.configurations) ~= "table" then
 		return {}
 	end
 
@@ -30,12 +29,12 @@ function M.tasks(bufnr)
 		if task.name then
 			local lnum = utils.find_line(bufnr, "name", task.name)
 			if lnum then
-				all_tasks[#all_tasks + 1] = {
+				table.insert(all_tasks, {
 					lnum = lnum,
 					run = function()
 						M.run(task, bufnr)
 					end,
-				}
+				})
 			end
 		end
 	end
@@ -74,7 +73,7 @@ function M.run(config, bufnr)
 				table.insert(commands, pre_cmd)
 			end
 		else
-			vim.notify(vim.fn.printf(consts.strings.task_not_found, config.preLaunchTask), vim.log.levels.WARN)
+			vim.notify(string.format(consts.strings.task_not_found, config.preLaunchTask), vim.log.levels.WARN)
 		end
 	end
 
@@ -84,7 +83,7 @@ function M.run(config, bufnr)
 		table.insert(commands, launch_cmd)
 	end
 
-	if #commands == 0 then
+	if vim.tbl_isempty(commands) then
 		return
 	end
 
@@ -105,12 +104,8 @@ function M.load_tasks_json(bufnr)
 		return {}
 	end
 
-	local content = table.concat(lines, "\n")
-	content = utils.strip_json_comments(content)
-	content = utils.normalise_json_commas(content)
-
-	local ok, json = pcall(vim.json.decode, content)
-	if not ok or type(json) ~= "table" or json.tasks == nil then
+	local json = utils.parse_json_content(table.concat(lines, "\n"))
+	if not json or not json.tasks then
 		return {}
 	end
 
@@ -127,17 +122,11 @@ end
 --- @param project_tasks table<string, vscode.TaskConfig>
 --- @return string | nil
 function M.resolve_default_build_task(project_tasks)
-	for label, task in pairs(project_tasks) do
-		if
-			task.group -- fmt
-			and type(task.group) == "table"
+	return vim.iter(project_tasks):find(function(_, task)
+		return type(task.group) == "table" --
 			and task.group.kind == "build"
-			and task.group.isDefault == true
-		then
-			return label
-		end
-	end
-	return nil
+			and task.group.isDefault
+	end)
 end
 
 --- build command for a launch config
@@ -156,22 +145,18 @@ function M.build_cmd(config, inputs, env)
 		args = vim.list_extend({ config.program }, config.args or {})
 	elseif config.type == "cppdbg" then
 		exec = config.program
-		if not exec then
-			vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
-			return nil
-		end
 		args = config.args
 	else
 		exec = config.runtimeExecutable or config.program
-		if not exec then
-			vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
-			return nil
-		end
 		args = config.args
 	end
 
-	local cmd = vsutils.build_cmd(exec, args, inputs, env)
-	return cmd
+	if not exec then
+		vim.notify(consts.strings.missing_program, vim.log.levels.ERROR)
+		return nil
+	end
+
+	return vsutils.build_cmd(exec, args, inputs, env)
 end
 
 return M
