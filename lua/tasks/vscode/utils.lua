@@ -105,14 +105,65 @@ function M.resolve_vars(str, inputs, env)
 		if not input then
 			return ""
 		end
-
-		if input.type == "promptString" then
-			return vim.fn.input((input.description or id) .. ": ", input.default or "")
-		end
-		return ""
+		return M.resolve_input(input)
 	end)
 
 	return str
+end
+
+--- @param input vscode.UserInput
+function M.resolve_input(input)
+	-- prompt for user input
+	if input.type == "promptString" then
+		local prompt = (input.description or input.id) .. ": "
+
+		if input.password then
+			local result = vim.fn.inputsecret(prompt)
+			return result ~= "" and result or input.default or ""
+		end
+
+		local ok, result = pcall(vim.fn.input, prompt, input.default or "")
+		if ok then
+			return result
+		end
+
+		return input.default or ""
+	end
+
+	-- prompt to choose an option
+	if input.type == "pickString" then
+		local items = {}
+
+		for _, opt in ipairs(input.options or {}) do
+			if type(opt) == "table" then
+				table.insert(items, {
+					label = opt.label or tostring(opt.value),
+					value = opt.value,
+				})
+			else
+				table.insert(items, {
+					label = tostring(opt),
+					value = opt,
+				})
+			end
+		end
+
+		local lines = { (input.description or input.id) .. ":" }
+
+		for i, item in ipairs(items) do
+			table.insert(lines, "[" .. i .. "] " .. item.label)
+		end
+
+		local idx = vim.fn.inputlist(lines)
+
+		if idx >= 1 and idx <= #items then
+			return items[idx].value
+		end
+
+		return input.default or ""
+	end
+
+	return ""
 end
 
 --- resolve variables in env and add to a merged env
