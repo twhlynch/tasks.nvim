@@ -1,6 +1,6 @@
 # tasks.nvim
 
-Task runner for neovim, supporting `VSCode`, and `npm`.
+Task runner for neovim, supporting `vscode` and `npm` task providers.
 
 ## Usage
 
@@ -10,7 +10,10 @@ Example usage for `lazy.nvim`.
 return {
 	"twhlynch/tasks.nvim",
 	opts = {
-		todo = true,
+		keybind = "<leader><CR>",
+		sign_icon = "▶",
+		sign_hl = "DiagnosticFloatingOk",
+		providers = { "vscode", "npm" },
 	},
 }
 ```
