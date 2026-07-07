@@ -27,7 +27,7 @@ function M.tasks(bufnr)
 					lnum = lnum,
 					run = function()
 						local terminal = require("tasks.terminal")
-						terminal.execute_commands({ command }, vim.fn.environ(), vim.fn.getcwd())
+						terminal.execute_commands({ "npm run " .. key }, vim.fn.environ(), vim.fn.getcwd())
 					end,
 				})
 			end
