@@ -14,7 +14,7 @@ M.options = {
 	keybind_picker = "<leader>B",
 	sign_icon = "▶",
 	sign_hl = "DiagnosticFloatingOk",
-	providers = { "vscode", "npm" },
+	providers = {},
 	ignore = { "%.git/" },
 }
 
