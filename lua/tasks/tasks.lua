@@ -139,9 +139,11 @@ function M.attach(bufnr)
 
 		-- keymap
 		local keybind = require("tasks.options").get().keybind
-		vim.keymap.set("n", keybind, function()
-			M.run(all_tasks)
-		end, { buf = bufnr, desc = consts.strings.keybind_desc })
+		if keybind then
+			vim.keymap.set("n", keybind, function()
+				M.run(all_tasks)
+			end, { buf = bufnr, desc = consts.strings.keybind_desc })
+		end
 	end
 end
 
@@ -158,9 +160,11 @@ function M.setup()
 	})
 
 	-- global keybind for task picker
-	vim.keymap.set("n", options.keybind_picker, function()
-		M.pick()
-	end, { desc = consts.strings.picker_desc })
+	if options.keybind_picker then
+		vim.keymap.set("n", options.keybind_picker, function()
+			M.pick()
+		end, { desc = consts.strings.picker_desc })
+	end
 
 	-- attach on read and write
 	local pattern = M.get_pattern()
