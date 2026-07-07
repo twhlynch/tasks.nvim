@@ -5,6 +5,10 @@ function M.get_pattern()
 	return { "*/package.json" }
 end
 
+function M.get_ignore()
+	return { "node_modules/" }
+end
+
 function M.get_tasks(bufnr)
 	local path = vim.api.nvim_buf_get_name(bufnr)
 

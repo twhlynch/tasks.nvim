@@ -28,6 +28,7 @@ function M.tasks(bufnr)
 			local lnum = utils.find_line(bufnr, "label", task.label)
 			if lnum then
 				table.insert(tasks, {
+					name = task.label,
 					lnum = lnum,
 					run = function()
 						M.run(task, json.inputs)

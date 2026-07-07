@@ -23,6 +23,7 @@ function M.tasks(bufnr)
 
 			if lnum then
 				table.insert(tasks, {
+					name = key,
 					lnum = lnum,
 					run = function()
 						local terminal = require("tasks.terminal")

@@ -11,9 +11,11 @@ return {
 	"twhlynch/tasks.nvim",
 	opts = {
 		keybind = "<leader><CR>",
+		keybind_picker = "<leader>B",
 		sign_icon = "▶",
 		sign_hl = "DiagnosticFloatingOk",
 		providers = { "vscode", "npm" },
+		ignore = { "%.git/" },
 	},
 }
 ```

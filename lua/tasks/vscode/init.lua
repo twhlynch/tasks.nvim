@@ -5,6 +5,10 @@ function M.get_pattern()
 	return { "*/.vscode/tasks.json", "*/.vscode/launch.json" }
 end
 
+function M.get_ignore()
+	return {}
+end
+
 function M.get_tasks(bufnr)
 	local path = vim.api.nvim_buf_get_name(bufnr)
 

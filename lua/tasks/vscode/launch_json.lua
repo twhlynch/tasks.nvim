@@ -30,6 +30,7 @@ function M.tasks(bufnr)
 			local lnum = utils.find_line(bufnr, "name", task.name)
 			if lnum then
 				table.insert(all_tasks, {
+					name = task.name,
 					lnum = lnum,
 					run = function()
 						M.run(task, bufnr)

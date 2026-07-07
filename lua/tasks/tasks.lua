@@ -3,8 +3,10 @@ local consts = require("tasks.consts")
 --- @class Tasks.Provider
 --- @field get_tasks fun(bufnr: integer): Tasks.Task[]
 --- @field get_pattern fun(): string[]
+--- @field get_ignore fun(): string[]
 
 --- @class Tasks.Task
+--- @field name string
 --- @field lnum integer
 --- @field run fun()
 
@@ -54,6 +56,61 @@ function M.render(bufnr, tasks)
 	end
 end
 
+function M.find_tasks_globally()
+	local all_tasks = {}
+
+	for _, provider in ipairs(M.get_providers()) do
+		local patterns = provider.get_pattern()
+
+		local ignore = vim.list_extend(provider.get_ignore(), require("tasks.options").get().ignore)
+
+		for _, pattern in ipairs(patterns) do
+			local files = vim.fn.glob(pattern:gsub("^%*/", "**/"), false, true)
+
+			for _, filepath in ipairs(files) do
+				if not vim.iter(ignore):find(function(p)
+					return filepath:match(p)
+				end) then
+					local bufnr = vim.fn.bufadd(filepath)
+					vim.fn.bufload(bufnr)
+					vim.list_extend(all_tasks, provider.get_tasks(bufnr))
+					vim.bo[bufnr].bufhidden = "hide"
+					vim.bo[bufnr].buflisted = false
+				end
+			end
+		end
+	end
+
+	return all_tasks
+end
+
+--- @param tasks? Tasks.Task[]
+function M.pick(tasks)
+	tasks = tasks or M.find_tasks_globally()
+
+	if vim.tbl_isempty(tasks) then
+		vim.notify("No tasks found", vim.log.levels.WARN)
+		return
+	end
+
+	local items = vim.iter(tasks)
+		:map(function(t)
+			return { task = t, display = t.name }
+		end)
+		:totable()
+
+	vim.ui.select(items, {
+		prompt = consts.strings.picker_desc,
+		format_item = function(item)
+			return item.display
+		end,
+	}, function(choice)
+		if choice then
+			choice.task.run()
+		end
+	end)
+end
+
 --- @param tasks Tasks.Task[]
 function M.run(tasks)
 	local line = vim.api.nvim_win_get_cursor(0)[1]
@@ -99,6 +156,11 @@ function M.setup()
 		text = options.sign_icon,
 		texthl = options.sign_hl,
 	})
+
+	-- global keybind for task picker
+	vim.keymap.set("n", options.keybind_picker, function()
+		M.pick()
+	end, { desc = consts.strings.picker_desc })
 
 	-- attach on read and write
 	local pattern = M.get_pattern()
