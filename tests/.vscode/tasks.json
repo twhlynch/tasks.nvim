@@ -22,6 +22,16 @@
 			"args": ["\"a\"", "'b'", "c d"]
 		},
 		{
+			"label": "bad exit",
+			"type": "shell",
+			"command": "exit 1",
+		},
+		{
+			"label": "sleep",
+			"type": "shell",
+			"command": "sleep 5 && echo 'sleep'",
+		},
+		{
 			// hello world
 			"label": "hello world",
 			"type": "shell",
