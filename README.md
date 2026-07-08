@@ -16,6 +16,7 @@ return {
 		sign_hl = "DiagnosticFloatingOk",
 		providers = { "vscode", "npm" },
 		ignore = { "%.git/" },
+		runner = "floating",
 	},
 }
 ```
