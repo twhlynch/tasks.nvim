@@ -19,8 +19,6 @@ return {
 		sign_hl = "DiagnosticFloatingOk",
 		-- task providers to include
 		providers = { "vscode", "npm" },
-		-- folders to ignore when looking for task files
-		ignore = { "%.git/" },
 		-- how to run tasks
 		-- "floating", "split", "vsplit", "background"
 		-- or a custom function `func(cmd: string)`

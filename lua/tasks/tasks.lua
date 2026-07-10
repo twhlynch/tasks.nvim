@@ -2,8 +2,7 @@ local consts = require("tasks.consts")
 
 --- @class Tasks.Provider
 --- @field get_tasks fun(bufnr: integer): Tasks.Task[]
---- @field get_pattern fun(): string[]
---- @field get_ignore fun(): string[]
+--- @field get_files fun(): string[]
 
 --- @class Tasks.Task
 --- @field name string
@@ -31,13 +30,15 @@ end
 --- get all providers patterns
 --- @return string[]
 function M.get_pattern()
-	local pattern = {}
+	local patterns = {}
 
 	for _, provider in ipairs(M.get_providers()) do
-		vim.list_extend(pattern, provider.get_pattern())
+		vim.list_extend(patterns, provider.get_files())
 	end
 
-	return pattern
+	return vim.fn.map(patterns, function(_, pattern)
+		return "*/" .. pattern
+	end)
 end
 
 --- @param bufnr integer
@@ -56,27 +57,21 @@ function M.render(bufnr, tasks)
 	end
 end
 
-function M.find_tasks_globally()
+function M.find_tasks()
 	local all_tasks = {}
 
 	for _, provider in ipairs(M.get_providers()) do
-		local patterns = provider.get_pattern()
+		local files = provider.get_files()
 
-		local ignore = vim.list_extend(provider.get_ignore(), require("tasks.options").get().ignore)
+		for _, file in ipairs(files) do
+			local readable = vim.fn.filereadable(file)
 
-		for _, pattern in ipairs(patterns) do
-			local files = vim.fn.glob(pattern:gsub("^%*/", "**/"), false, true)
-
-			for _, filepath in ipairs(files) do
-				if not vim.iter(ignore):find(function(p)
-					return filepath:match(p)
-				end) then
-					local bufnr = vim.fn.bufadd(filepath)
-					vim.fn.bufload(bufnr)
-					vim.list_extend(all_tasks, provider.get_tasks(bufnr))
-					vim.bo[bufnr].bufhidden = "hide"
-					vim.bo[bufnr].buflisted = false
-				end
+			if readable then
+				local bufnr = vim.fn.bufadd(file)
+				vim.fn.bufload(bufnr)
+				vim.list_extend(all_tasks, provider.get_tasks(bufnr))
+				vim.bo[bufnr].bufhidden = "hide"
+				vim.bo[bufnr].buflisted = false
 			end
 		end
 	end
@@ -84,9 +79,8 @@ function M.find_tasks_globally()
 	return all_tasks
 end
 
---- @param tasks? Tasks.Task[]
-function M.pick(tasks)
-	tasks = tasks or M.find_tasks_globally()
+function M.pick()
+	local tasks = M.find_tasks()
 
 	if vim.tbl_isempty(tasks) then
 		vim.notify("No tasks found", vim.log.levels.WARN)
@@ -167,9 +161,8 @@ function M.setup()
 	end
 
 	-- attach on read and write
-	local pattern = M.get_pattern()
 	vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-		pattern = pattern,
+		pattern = M.get_pattern(),
 		callback = function(args)
 			M.attach(args.buf)
 		end,

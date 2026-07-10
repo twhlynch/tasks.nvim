@@ -1,12 +1,8 @@
 --- @type Tasks.Provider
 local M = {}
 
-function M.get_pattern()
-	return { "*/package.json" }
-end
-
-function M.get_ignore()
-	return { "node_modules/" }
+function M.get_files()
+	return { "package.json" }
 end
 
 function M.get_tasks(bufnr)

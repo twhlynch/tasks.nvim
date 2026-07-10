@@ -8,7 +8,6 @@ local M = {}
 --- @field sign_icon string icon to use for signs at runnable lines
 --- @field sign_hl string highlight group to use for signs
 --- @field providers string[] task providers to enable
---- @field ignore string[] folders to ignore when searching for tasks
 --- @field runner Tasks.Options.options.runner how to run tasks
 
 --- @type Tasks.Options.options
@@ -18,7 +17,6 @@ M.options = {
 	sign_icon = "▶",
 	sign_hl = "DiagnosticFloatingOk",
 	providers = {},
-	ignore = { "%.git/" },
 	runner = "floating",
 }
 

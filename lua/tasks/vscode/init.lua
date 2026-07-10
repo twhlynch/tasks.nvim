@@ -1,12 +1,8 @@
 --- @type Tasks.Provider
 local M = {}
 
-function M.get_pattern()
-	return { "*/.vscode/tasks.json", "*/.vscode/launch.json" }
-end
-
-function M.get_ignore()
-	return {}
+function M.get_files()
+	return { ".vscode/tasks.json", ".vscode/launch.json" }
 end
 
 function M.get_tasks(bufnr)
