@@ -6,7 +6,7 @@ local consts = require("tasks.consts")
 
 --- @class Tasks.Task
 --- @field name string
---- @field lnum integer
+--- @field lnum? integer
 --- @field run fun()
 
 local M = {}
@@ -50,10 +50,12 @@ function M.render(bufnr, tasks)
 
 	-- place signs
 	for i, task in ipairs(tasks) do
-		vim.fn.sign_place(i, consts.sign_group, consts.sign_name, bufnr, {
-			lnum = task.lnum,
-			priority = 10,
-		})
+		if task.lnum then
+			vim.fn.sign_place(i, consts.sign_group, consts.sign_name, bufnr, {
+				lnum = task.lnum,
+				priority = 10,
+			})
+		end
 	end
 end
 
