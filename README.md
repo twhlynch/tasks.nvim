@@ -1,6 +1,6 @@
 # tasks.nvim
 
-Task runner for neovim, supporting `vscode` and `npm` task providers.
+Task runner for neovim, supporting multiple task providers.
 
 ## Usage
 
@@ -18,7 +18,7 @@ return {
 		sign_icon = "▶",
 		sign_hl = "DiagnosticFloatingOk",
 		-- task providers to include
-		providers = { "vscode", "npm" },
+		providers = { "vscode", "npm", "make" },
 		-- how to run tasks
 		-- "floating", "split", "vsplit", "background"
 		-- or a custom function `func(cmd: string)`
